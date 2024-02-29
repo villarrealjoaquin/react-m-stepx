@@ -1,20 +1,19 @@
-import { ReactNode, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 
-export function usePortal(root: HTMLDivElement | DocumentFragment | null, modal: ReactNode) {
-  const _root = useRef<HTMLDivElement | DocumentFragment | null>(null);
+export function usePortal() {
+  const portalRootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!root || !(root instanceof HTMLDivElement)) {
-      _root.current = document.createElement("div");
-    } else {
-      _root.current = root;
-    }
+    const portalRoot = document.createElement("div");
+    document.body.appendChild(portalRoot);
+    portalRootRef.current = portalRoot;
 
-    document.body.appendChild(_root.current);
+    return () => {
+      if (portalRootRef.current) {
+        document.body.removeChild(portalRootRef.current);
+      }
+    };
+  }, []);
 
-    createPortal(modal, _root.current);
-  }, [root, modal]);
-
-  return _root;
+  return { portalRoot: portalRootRef.current };
 }
