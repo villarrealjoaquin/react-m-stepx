@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { usePortal } from "../hooks";
+import { useRoot } from "../hooks";
 
 interface PortalProps {
   children: ReactNode;
@@ -8,6 +8,6 @@ interface PortalProps {
 }
 
 export function Portal({ children, open = false }: PortalProps) {
-  const { portalRoot } = usePortal();
+  const { portalRoot } = useRoot();
   return open ? createPortal(children, portalRoot!) : null;
 }

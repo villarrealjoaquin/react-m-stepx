@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export function usePortal() {
+export function useRoot() {
   const portalRootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
