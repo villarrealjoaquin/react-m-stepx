@@ -1,12 +1,22 @@
 import { ReactNode, createContext, useReducer, useState } from "react";
 import { stepReducer } from "../Reducers/step-reducer";
 
+interface StepContextProps {
+  isPortalActive: boolean;
+  getAllInfo: () => { currentStep: number; formData: Record<string, unknown> };
+  getCurrentStep: () => number;
+  nextStep: () => void;
+  previousStep: () => void;
+  updateData: (data: Record<string, unknown>) => void;
+  toggleStep: () => void;
+}
+
 export const initialState = {
   currentStep: 0,
   formData: {},
 };
 
-export const StepContext = createContext(null);
+export const StepContext = createContext<StepContextProps | null>(null);
 
 export default function StepProvider({ children }: { children: ReactNode }) {
   const [state, dispath] = useReducer(stepReducer, initialState);
@@ -32,7 +42,7 @@ export default function StepProvider({ children }: { children: ReactNode }) {
     dispath({ type: "PREVIOUS_STEP" });
   }
 
-  const updateData = (data: any) => {
+  const updateData = (data: Record<string, unknown>) => {
     dispath({ type: "UPDATE_DATA", payload: data });
   }
 

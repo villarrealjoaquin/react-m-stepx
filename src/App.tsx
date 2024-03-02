@@ -1,9 +1,14 @@
+// import MStepxLazy from './components/MStepxLazy';
+import { useState } from 'react';
 import { MStepx } from './components';
-import Data from './components/Data';
-import MStepxLazy from './components/MStepxLazy';
-import { Portal } from './components/Portal';
 import { Step1, Step2, Step3 } from './examples';
-import { useStepx } from './hooks/useStepx';
+import Wrapper from './components/Wrapper';
+
+// const stepsLazy = [
+//   () => import('./examples/Step1'),
+//   () => import('./examples/Step2'),
+//   () => import('./examples/Step3'),
+// ];
 
 const STEPS = [
   <Step1 />,
@@ -11,33 +16,29 @@ const STEPS = [
   <Step3 />,
 ]
 
-const stepsLazy = [
-  () => import('./examples/Step1'),
-  () => import('./examples/Step2'),
-  () => import('./examples/Step3'),
-];
-
 function App() {
-  const { isPortalActive, toggleStep } = useStepx();
+  const [isPortalActive, setIsPortalActive] = useState(false);
+  // const { step, fields } = useMStepx(STEPS);
+
+  const toggleStep = () => {
+    setIsPortalActive(!isPortalActive);
+  }
+
+  // const handleCompleteForm = () => { }
 
   return (
     <>
       <div className="App">
         <h1>react-m-stepx</h1>
-        <Portal open={isPortalActive}>
-          <MStepx
-            steps={STEPS}
-            overlay={false}
-            className='test'
-          />
-        </Portal>
-        <button>X</button>
-        <button onClick={toggleStep}>open modal</button>
-        <Data />
-        <MStepxLazy steps={stepsLazy} overlay={false} />
+        <Wrapper onSubmit={() => { }} open={toggleStep} status={isPortalActive}>
+          <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} />
+        </Wrapper>
+        <button onClick={() => setIsPortalActive(!isPortalActive)}>open</button>
       </div>
     </>
   )
 }
 
 export default App
+
+

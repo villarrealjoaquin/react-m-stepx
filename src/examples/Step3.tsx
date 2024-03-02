@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { useStepx } from "../hooks/useStepx";
 
-export default function Step3() {
+export default function Step3(props) {
   const [data, setData] = useState({});
-  const { updateData, getAllInfo, nextStep } = useStepx();
 
   const nextStepx = () => {
-    updateData(data);
-    nextStep();
+    props.updateData(data);
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,11 +12,7 @@ export default function Step3() {
       ...data,
       [e.target.name]: e.target.value
     })
-    // dispath({ type: "UPDATE_DATA", payload: { [e.target.name]: e.target.value } })
   }
-
-  console.log(getAllInfo());
-
 
   return (
     <>
