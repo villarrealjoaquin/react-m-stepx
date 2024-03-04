@@ -13,7 +13,7 @@ interface MStepxProps {
 }
 
 export default function MStepx({ steps, overlay, className = '', transition, save = false }: MStepxProps) {
-  const { step, fields, currentStep } = useMStepx(steps, save);
+  const { step, fields } = useMStepx(steps, save);
 
   const transitionStyles = transition
     ? {
@@ -24,7 +24,7 @@ export default function MStepx({ steps, overlay, className = '', transition, sav
 
   return (
     <>
-      <div key={currentStep} className={`${overlay ? 'overlay' : ''} ${className}`} style={transitionStyles}>
+      <div className={`${overlay ? 'overlay' : ''} ${className}`} style={transitionStyles}>
         {step}
       </div>
       <p>{JSON.stringify(fields)}</p>

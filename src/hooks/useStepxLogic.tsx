@@ -24,10 +24,10 @@ const createStepsWithProps = (steps: ReactNode[], props: Record<string, unknown>
   });
 };
 
-export default function useMStepx(steps: JSX.Element[], save: boolean) {
+export default function useStepxLogic(initialStep = 0, save: boolean) {
   const [currentStep, setCurrentStep] = useState<number>((): number => {
     const existCurrentStepInLocalStorage = localStorageUtility.existInLocalStorage('step');
-    return existCurrentStepInLocalStorage ? localStorageUtility.getInLocalStorage('step') : 0;
+    return existCurrentStepInLocalStorage ? localStorageUtility.getInLocalStorage('step') : initialStep;
   });
   const [fields, setFields] = useState<Record<string, unknown>>(() => {
     const existFields = localStorageUtility.existInLocalStorage('fields');
@@ -68,8 +68,7 @@ export default function useMStepx(steps: JSX.Element[], save: boolean) {
   });
 
   return {
-    step: steps[currentStep],
-    fields,
     currentStep,
-  };
+    fields,
+  }
 }
