@@ -8,13 +8,12 @@ interface MStepxProps {
     duration?: string;
     type?: string;
   };
+  save?: boolean;
   open?: () => void;
 }
 
-export default function MStepx({ steps, overlay, className = '', transition, ...props }: MStepxProps) {
-  const showPortal = props.open?.bind(null, "Hello");
-
-  const { step, fields, currentStep } = useMStepx(steps, showPortal);
+export default function MStepx({ steps, overlay, className = '', transition, save = false }: MStepxProps) {
+  const { step, fields, currentStep } = useMStepx(steps, save);
 
   const transitionStyles = transition
     ? {

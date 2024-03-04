@@ -11,9 +11,10 @@ export function useRoot() {
     return () => {
       if (portalRootRef.current) {
         document.body.removeChild(portalRootRef.current);
+        portalRootRef.current = null;
       }
     };
   }, []);
-
+  
   return { portalRoot: portalRootRef.current };
 }
