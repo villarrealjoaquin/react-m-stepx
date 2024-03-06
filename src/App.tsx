@@ -16,27 +16,24 @@ const STEPS = [
 ]
 
 function App() {
-  // const { step, fields } = useMStepx(STEPS);
-
-  // const toggleStep = () => {
-  //   setIsPortalActive(!isPortalActive);
-  // }
-
-  // const handleCompleteForm = () => { }
-
   return (
     <>
       <div className="App">
         <h1>react-m-stepx</h1>
         <Modal>
           <Modal.Portal>
-            <Modal.Stepx>{STEPS}</Modal.Stepx>
-            <Modal.Next>Next</Modal.Next>
-            <Modal.Back>Back</Modal.Back>
+            <Modal.Stepx steps={STEPS}>
+              <div className='' style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '10px' }} >
+                <Modal.Back>Back</Modal.Back>
+                <Modal.Next>Next</Modal.Next>
+              </div>
+            </Modal.Stepx>
+            {/* <div className='' style={{ display: 'flex', }}>
+            </div> */}
             {/* <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} /> */}
           </Modal.Portal>
-          <Modal.Close>Close</Modal.Close>
           <Modal.Open>Open</Modal.Open>
+          <Modal.Close>Close</Modal.Close>
         </Modal>
         {/* <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} save /> */}
         {/* <button onClick={() => setIsPortalActive(!isPortalActive)}>open</button> */}

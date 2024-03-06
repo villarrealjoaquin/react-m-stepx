@@ -1,51 +1,45 @@
-import React, { useState } from "react";
+import React, { JSXElementConstructor, useCallback, useState } from "react";
 import ReactDOM from 'react-dom';
 import { useRoot } from "../hooks";
 
-type ContextProviderProps<T> = {
-  children: React.ReactNode;
-} & T;
-
 type ContextModal = {
   open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   currentStep: number;
+  onOpen: React.MouseEventHandler<HTMLButtonElement>;
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
 };
 
 type ContextPortal = {
-  nextStep: () => void;
-  backStep: () => void;
+  onNextStep: () => void;
+  onBackStep: () => void;
 }
 
-function createContext<T>() {
+function createContext<T>(providerName: string) {
   const Context = React.createContext<T | null>(null);
 
-  function Provider(props: ContextProviderProps<T>) {
-    return <Context.Provider value={{ ...props }}>{props.children}</Context.Provider>;
+  function Provider({ children, ...props }: { children: React.ReactNode } & T) {
+    return <Context.Provider value={props as T}>{children}</Context.Provider>;
   }
 
   function useContext() {
     const context = React.useContext(Context);
     if (!context) {
-      throw new Error('useStepx must be used within a StepProvider');
+      throw new Error('useStepx must be used within a ' + providerName);
     }
     return context;
   }
-
   return [Provider, useContext] as const;
 }
 
-const [ModalProvider, useContextStepx] = createContext<ContextModal>();
+const [ModalProvider, useModalContext] = createContext<ContextModal>('ModalProvider');
 
 export function ModalStepx({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-
   return (
     <ModalProvider
       open={open}
-      setOpen={setOpen}
+      onOpen={() => setOpen(!open)}
       currentStep={currentStep}
       setCurrentStep={setCurrentStep}
     >
@@ -54,34 +48,31 @@ export function ModalStepx({ children }: { children: React.ReactNode }) {
   );
 }
 
-const [PortalProvider, usePortalContext] = createContext<ContextPortal>();
+const [StepxProvider, useStepxContext] = createContext<ContextPortal>('PortalProvider');
 
 export function Portal({ children }: { children: React.ReactNode }) {
   const { portalRoot } = useRoot();
-  const { open, setCurrentStep } = useContextStepx();
-
-  const nextStep = () => {
-    setCurrentStep((i) => i + 1);
-  };
-
-  const backStep = () => {
-    setCurrentStep((i) => i - 1);
-  };
-
+  const { open } = useModalContext();
   return open && portalRoot
     ? ReactDOM.createPortal(
-      <PortalProvider nextStep={nextStep} backStep={backStep}>
-        <div role="dialog">
-          {children}
-        </div>
-      </PortalProvider>
+      <div role="dialog">
+        {children}
+      </div>
       , portalRoot)
     : null;
 }
 
-function Stepx({ children }: { children: React.ReactNode }) {
+function Stepx({ steps, children }: { steps: React.ReactElement[], children: React.ReactNode }) {
   const [fields, setFields] = useState({});
-  const { currentStep } = useContextStepx();
+  const { currentStep, setCurrentStep } = useModalContext();
+
+  const nextStep = useCallback(() => {
+    setCurrentStep((i) => i + 1);
+  }, []);
+
+  const backStep = useCallback(() => {
+    setCurrentStep((i) => i - 1);
+  }, []);
 
   const updateFields = (data: Record<string, unknown>) => {
     setFields({
@@ -90,39 +81,47 @@ function Stepx({ children }: { children: React.ReactNode }) {
     });
   };
 
-  let stepsArray = React.Children.toArray(children);
-  stepsArray = React.Children.map(children, (child) => {
-    return React.cloneElement(child as React.ReactElement, { fields, updateFields });
+  steps = React.Children.map(steps, (child) => {
+    return React.cloneElement(
+      child as React.ReactElement<any, string | JSXElementConstructor<any>>,
+      { fields, updateFields, currentStep }
+    );
   });
 
-  if (!stepsArray[currentStep]) return null;
-  return stepsArray[currentStep];
+  if (!steps[currentStep]) return null;
+
+  return (
+    <StepxProvider onNextStep={nextStep} onBackStep={backStep}>
+      <>
+        {steps[currentStep]}
+        {children}
+      </>
+    </StepxProvider>
+  );
 }
 
 function Next({ children }: { children: React.ReactNode }) {
-  const { nextStep } = usePortalContext();
-  return (
-    <button onClick={nextStep}>{children}</button>
-  );
+  const contextPortal = useStepxContext();
+  return <button onClick={contextPortal.onNextStep}>{children}</button>
 }
 
 function Back({ children }: { children: React.ReactNode }) {
-  const contextPortal = usePortalContext();
-  return <button onClick={contextPortal.backStep}>{children}</button>;
+  const contextPortal = useStepxContext();
+  return <button onClick={contextPortal.onBackStep}>{children}</button>
 }
 
 export function Trigger({ children }: { children: React.ReactNode }) {
-  const contextPortal = useContextStepx();
-  return (
-    <button onClick={() => contextPortal.setOpen(true)}>{children}</button>
-  );
+  const contextPortal = useModalContext();
+  const contextStepx = useModalContext();
+  if (contextStepx.open) return <></>;
+  return <button onClick={contextPortal.onOpen}>{children}</button>
 }
 
 export function ClosePortal({ children }: { children: React.ReactNode }) {
-  const { open, setOpen } = useContextStepx();
+  const { open, onOpen } = useModalContext();
   if (!open) return null;
   return (
-    <button onClick={() => setOpen(false)}>{children}</button>
+    <button onClick={onOpen}>{children}</button>
   );
 }
 
@@ -132,6 +131,10 @@ ModalStepx.Close = ClosePortal;
 ModalStepx.Stepx = Stepx;
 ModalStepx.Next = Next;
 ModalStepx.Back = Back;
+
+// const rootModal = Object.assign(ModalStepx, {});
+
 ModalStepx.displayName = 'MStepxContainer';
 
 export { ModalStepx as Modal };
+
