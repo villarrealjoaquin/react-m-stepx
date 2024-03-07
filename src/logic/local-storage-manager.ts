@@ -1,4 +1,4 @@
-export const localStorageUtility = {
+export const localStorageManager = {
   setInLocalStorage<T>(name: string, data: T): void {
     localStorage.setItem(name.toString(), JSON.stringify(data));
   },

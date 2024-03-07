@@ -1,8 +1,8 @@
-import React, { JSXElementConstructor, useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import ReactDOM from 'react-dom';
 import { useRoot } from "../hooks";
-import { localStorageUtility } from "../logic/local-storage";
-import { set } from "../logic/set";
+import { localStorageManager } from "../logic/local-storage-manager";
+import { retrieveFromStorage } from "../logic/retrieveFromStorage";
 import { localStorageKeys } from "../models/local-storage-keys";
 
 type ContextModal = {
@@ -13,6 +13,7 @@ type ContextModal = {
 };
 
 type ContextPortal = {
+  save: boolean;
   onNextStep: () => void;
   onBackStep: () => void;
 }
@@ -40,15 +41,20 @@ function createContext<T>(providerName: string) {
 const [ModalProvider, useModalContext] = createContext<ContextModal>('ModalProvider');
 
 export function ModalStepx({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(set<number>(0, localStorageKeys.STEP));
+  const [open, setOpen] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState(retrieveFromStorage<number>(0, localStorageKeys.STEP));
+
   const handleCurrentStepClick = (currentStep: number) => {
     setCurrentStep(currentStep);
+  };
+
+  const handlePortalToggle = () => {
+    setOpen(() => !open);
   };
   return (
     <ModalProvider
       open={open}
-      onOpen={() => setOpen(!open)}
+      onOpen={handlePortalToggle}
       currentStep={currentStep}
       onCurrentStep={handleCurrentStepClick}
     >
@@ -60,9 +66,10 @@ export function ModalStepx({ children }: { children: React.ReactNode }) {
 export function Portal({ children }: { children: React.ReactNode }) {
   const { portalRoot } = useRoot();
   const { open } = useModalContext(CONSUMER_MODAL);
+
   return open && portalRoot
     ? ReactDOM.createPortal(
-      <div role="dialog">
+      <div role="dialog relative">
         {children}
       </div>
       , portalRoot)
@@ -76,19 +83,19 @@ function Stepx({
 }: {
   steps: React.ReactElement[], save?: boolean, children: React.ReactNode
 }) {
-  const [fields, setFields] = useState(set<Record<string, unknown>>({}, localStorageKeys.FIELDS));
+  const [fields, setFields] = useState(retrieveFromStorage<Record<string, unknown>>({}, localStorageKeys.FIELDS));
   const { currentStep, onCurrentStep } = useModalContext(CONSUMER_MODAL);
 
   const nextStep = useCallback(() => {
     if (currentStep + 1 < steps.length) {
-      if (save) localStorageUtility.setInLocalStorage(localStorageKeys.STEP, currentStep + 1);
+      if (save) localStorageManager.setInLocalStorage(localStorageKeys.STEP, currentStep + 1);
       onCurrentStep((i) => i + 1);
     }
   }, [currentStep, onCurrentStep, steps.length, save]);
 
   const backStep = useCallback(() => {
     if (currentStep > 0) {
-      if (save) localStorageUtility.setInLocalStorage(localStorageKeys.STEP, currentStep - 1);
+      if (save) localStorageManager.setInLocalStorage(localStorageKeys.STEP, currentStep - 1);
       onCurrentStep((i) => i - 1);
     }
   }, [currentStep, onCurrentStep, save]);
@@ -103,13 +110,13 @@ function Stepx({
       ...data,
     };
     setFields(update);
-    if (save) localStorageUtility.setInLocalStorage(localStorageKeys.FIELDS, update);
+    if (save) localStorageManager.setInLocalStorage(localStorageKeys.FIELDS, update);
   };
 
   steps = React.Children.map(steps, (child) => {
     if (React.isValidElement(child)) {
       return React.cloneElement(
-        child as React.ReactElement<any, string | JSXElementConstructor<any>>,
+        child as React.ReactElement<any, string | React.JSXElementConstructor<any>>,
         { fields, updateFields, currentStep }
       )
     }
@@ -117,7 +124,7 @@ function Stepx({
 
   if (!steps[currentStep]) return null;
   return (
-    <StepxProvider onNextStep={nextStep} onBackStep={backStep}>
+    <StepxProvider onNextStep={nextStep} onBackStep={backStep} save={null}>
       <>
         {steps[currentStep]}
         {children}
@@ -126,14 +133,28 @@ function Stepx({
   );
 }
 
-function Next({ children }: { children: React.ReactNode }) {
+type ButtonProps<T extends HTMLElement = HTMLButtonElement> = React.ButtonHTMLAttributes<T> & {
+  children: React.ReactNode;
+};
+
+function Next({ children, ...props }: ButtonProps) {
   const contextPortal = useStepxContext(CONSUMER_STEPX);
-  return <button onClick={contextPortal.onNextStep}>{children}</button>
+  return <button
+    onClick={contextPortal.onNextStep}
+    {...props}
+  >
+    {children}
+  </button>
 }
 
-function Back({ children }: { children: React.ReactNode }) {
+function Back({ children, ...props }: ButtonProps) {
   const contextPortal = useStepxContext(CONSUMER_STEPX);
-  return <button onClick={contextPortal.onBackStep}>{children}</button>
+  return <button
+    onClick={contextPortal.onBackStep}
+    {...props}
+  >
+    {children}
+  </button>
 }
 
 export function Trigger({ children }: { children: React.ReactNode }) {
@@ -146,7 +167,11 @@ export function ClosePortal({ children }: { children: React.ReactNode }) {
   const context = useModalContext(CONSUMER_MODAL);
   if (!context.open) return null;
   return (
-    <button onClick={context.onOpen}>{children}</button>
+    <>
+      <div className="w-full flex justify-center">
+        <button className="text-red-500 m-auto" onClick={context.onOpen}>{children}</button>
+      </div>
+    </>
   );
 }
 
