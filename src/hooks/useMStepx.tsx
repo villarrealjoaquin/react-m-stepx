@@ -1,20 +1,7 @@
 import React, { ReactNode, useState } from "react";
-
-const localStorageUtility = {
-  setInLocalStorage<T>(name: string, data: T): void {
-    localStorage.setItem(name.toString(), JSON.stringify(data));
-  },
-  getInLocalStorage<T>(name: string): T | null {
-    const data = localStorage.getItem(name);
-    return data ? JSON.parse(data) as T : null;
-  },
-  clearLocalStorage(): void {
-    localStorage.clear();
-  },
-  existInLocalStorage(name: string): boolean {
-    return !!localStorage.getItem(name.toString());
-  },
-};
+import { localStorageUtility } from "../logic/local-storage";
+import { set } from "../logic/set";
+import { localStorageKeys } from "../models/local-storage-keys";
 
 const createStepsWithProps = (steps: ReactNode[], props: Record<string, unknown>) => {
   return React.Children.map(steps, (child) => {
@@ -25,14 +12,8 @@ const createStepsWithProps = (steps: ReactNode[], props: Record<string, unknown>
 };
 
 export default function useMStepx(steps: JSX.Element[], save: boolean) {
-  const [currentStep, setCurrentStep] = useState<number>((): number => {
-    const existCurrentStepInLocalStorage = localStorageUtility.existInLocalStorage('step');
-    return existCurrentStepInLocalStorage ? localStorageUtility.getInLocalStorage('step') : 0;
-  });
-  const [fields, setFields] = useState<Record<string, unknown>>(() => {
-    const existFields = localStorageUtility.existInLocalStorage('fields');
-    return existFields ? localStorageUtility.getInLocalStorage('fields') : {};
-  });
+  const [currentStep, setCurrentStep] = useState<number>(set(0, localStorageKeys.STEP));
+  const [fields, setFields] = useState<Record<string, unknown>>(set({}, localStorageKeys.FIELDS));
 
   const updateData = (data: Record<string, unknown>) => {
     const updateFields = {
@@ -40,13 +21,13 @@ export default function useMStepx(steps: JSX.Element[], save: boolean) {
       ...data,
     };
     setFields(updateFields);
-    if (save) localStorageUtility.setInLocalStorage('fields', updateFields);
+    if (save) localStorageUtility.setInLocalStorage(localStorageKeys.FIELDS, updateFields);
   }
 
   const nextStep = () => {
     if (currentStep + 1 < steps.length) {
       const stepIndex = (i: number) => i + 1
-      if (save) localStorageUtility.setInLocalStorage('step', stepIndex(currentStep));
+      if (save) localStorageUtility.setInLocalStorage(localStorageKeys.STEP, stepIndex(currentStep));
       setCurrentStep(stepIndex);
     }
   };
@@ -54,7 +35,7 @@ export default function useMStepx(steps: JSX.Element[], save: boolean) {
   const backStep = () => {
     if (currentStep > 0) {
       const stepIndex = (i: number) => i - 1
-      if (save) localStorageUtility.setInLocalStorage('step', stepIndex(currentStep));
+      if (save) localStorageUtility.setInLocalStorage(localStorageKeys.STEP, stepIndex(currentStep));
       setCurrentStep(stepIndex);
     }
   };
