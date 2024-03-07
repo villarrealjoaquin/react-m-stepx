@@ -63,13 +63,22 @@ export function ModalStepx({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Portal({ children }: { children: React.ReactNode }) {
+const deleteScroll = (isScrollDelete: boolean) => {
+  if (isScrollDelete) {
+    document.body.classList.add('body-no-scroll');
+  } else {
+    document.body.classList.remove('body-no-scroll');
+  }
+};
+
+export function Portal({ scrollLock, children }: { scrollLock: boolean, children: React.ReactNode }) {
   const { portalRoot } = useRoot();
   const { open } = useModalContext(CONSUMER_MODAL);
+  deleteScroll(scrollLock);
 
   return open && portalRoot
     ? ReactDOM.createPortal(
-      <div role="dialog relative">
+      <div role="dialog relative" aria-modal="true" hidden={!open} tabIndex={-1} >
         {children}
       </div>
       , portalRoot)

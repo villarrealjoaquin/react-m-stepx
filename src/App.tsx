@@ -23,7 +23,7 @@ function App() {
           react-m-stepx
         </h1>
         <Modal>
-          <Modal.Portal>
+          <Modal.Portal scrollLock={false}>
             <Modal.Stepx steps={STEPS} save={true}>
               <div className='flex justify-center gap-3'>
                 <Modal.Back className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back</Modal.Back>
