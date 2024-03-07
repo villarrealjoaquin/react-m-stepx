@@ -4,6 +4,7 @@ import { useRoot } from "../hooks";
 import { localStorageManager } from "../logic/local-storage-manager";
 import { retrieveFromStorage } from "../logic/retrieveFromStorage";
 import { localStorageKeys } from "../models/local-storage-keys";
+import { createContext } from "../context";
 
 type ContextModal = {
   open: boolean;
@@ -14,29 +15,13 @@ type ContextModal = {
 
 type ContextPortal = {
   save: boolean;
+  overlay?: boolean;
   onNextStep: () => void;
   onBackStep: () => void;
 }
 
 const CONSUMER_MODAL = 'useModalContext';
 const CONSUMER_STEPX = 'useStepxContext';
-
-function createContext<T>(providerName: string) {
-  const Context = React.createContext<T | null>(null);
-
-  function Provider({ children, ...props }: { children: React.ReactNode } & T) {
-    return <Context.Provider value={props as T}>{children}</Context.Provider>;
-  }
-
-  function useContext(consumer: string) {
-    const context = React.useContext(Context);
-    if (!context) {
-      throw new Error(consumer + ' must be used within a ' + providerName);
-    }
-    return context;
-  }
-  return [Provider, useContext] as const;
-}
 
 const [ModalProvider, useModalContext] = createContext<ContextModal>('ModalProvider');
 
@@ -71,18 +56,44 @@ const deleteScroll = (isScrollDelete: boolean) => {
   }
 };
 
-export function Portal({ scrollLock, children }: { scrollLock: boolean, children: React.ReactNode }) {
+export function Portal({ scrollLock, overlay, children }: { scrollLock: boolean, overlay: boolean, children: React.ReactNode }) {
   const { portalRoot } = useRoot();
   const { open } = useModalContext(CONSUMER_MODAL);
   deleteScroll(scrollLock);
 
+  const overlayStyles: React.CSSProperties = overlay
+    ? { position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', backgroundColor: 'rgba(0, 0, 0, 0.7)', zIndex: 50 }
+    : null
+
   return open && portalRoot
     ? ReactDOM.createPortal(
-      <div role="dialog relative" aria-modal="true" hidden={!open} tabIndex={-1} >
+      <div role="dialog" className="flex justify-center flex-col bg-white" style={{ ...overlayStyles }} aria-modal="true" hidden={!open} tabIndex={-1} >
         {children}
       </div>
       , portalRoot)
     : null;
+}
+
+function Overlay(props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
+  const { ...overlayProps } = props;
+
+  const overlayStyles: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 10,
+    ...overlayProps.style,
+  };
+
+  return (
+    <div
+      {...overlayProps}
+      style={overlayStyles}
+    />
+  );
 }
 
 const [StepxProvider, useStepxContext] = createContext<ContextPortal>('StepxProvider');
@@ -166,25 +177,40 @@ function Back({ children, ...props }: ButtonProps) {
   </button>
 }
 
-export function Trigger({ children }: { children: React.ReactNode }) {
+export function Trigger({ children, ...props }: ButtonProps) {
   const contextModal = useModalContext(CONSUMER_MODAL);
   if (contextModal.open) return <></>;
-  return <button onClick={contextModal.onOpen}>{children}</button>
+  return (
+    <button
+      type="button"
+      onClick={contextModal.onOpen}
+      {...props}
+    >
+      {children}
+    </button>
+  )
 }
 
-export function ClosePortal({ children }: { children: React.ReactNode }) {
+export function ClosePortal({ children, ...props }: ButtonProps) {
   const context = useModalContext(CONSUMER_MODAL);
   if (!context.open) return null;
   return (
     <>
       <div className="w-full flex justify-center">
-        <button className="text-red-500 m-auto" onClick={context.onOpen}>{children}</button>
+        <button
+          type="button"
+          className="text-red-500 m-auto"
+          onClick={context.onOpen}
+          {...props}>
+          {children}
+        </button>
       </div>
     </>
   );
 }
 
 ModalStepx.Portal = Portal;
+ModalStepx.Overlay = Overlay;
 ModalStepx.Open = Trigger;
 ModalStepx.Close = ClosePortal;
 ModalStepx.Stepx = Stepx;

@@ -16,9 +16,10 @@ export default function Step1({ updateFields, fields }: any) {
         Name
       </label>
       <input
-        className="shadow appearance-none border rounded  py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         id="name"
         type="text"
+        value={fields.name}
         onChange={handleChange}
         name="name"
       />
@@ -29,6 +30,7 @@ export default function Step1({ updateFields, fields }: any) {
       <input
         className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         id="lastname"
+        value={fields.lastname}
         type="text"
         onChange={handleChange}
         name="lastname"
@@ -40,6 +42,7 @@ export default function Step1({ updateFields, fields }: any) {
       <input
         className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         id="email"
+        value={fields.email}
         type="email"
         onChange={handleChange}
         name="email"

@@ -23,7 +23,8 @@ function App() {
           react-m-stepx
         </h1>
         <Modal>
-          <Modal.Portal scrollLock={false}>
+          <Modal.Portal scrollLock={true} overlay={false} >
+            {/* <Modal.Overlay className='' /> */}
             <Modal.Stepx steps={STEPS} save={true}>
               <div className='flex justify-center gap-3'>
                 <Modal.Back className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back</Modal.Back>
@@ -31,10 +32,10 @@ function App() {
               </div>
               <Modal.Close>Close</Modal.Close>
             </Modal.Stepx>
-            {/* <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} /> */}
           </Modal.Portal>
           <Modal.Open>Open</Modal.Open>
         </Modal>
+        {/* <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} /> */}
         {/* <MStepx steps={STEPS} overlay={false} transition={{ duration: '0.5s', type: 'ease-in-out' }} save /> */}
         {/* <button onClick={() => setIsPortalActive(!isPortalActive)}>open</button> */}
       </div>
