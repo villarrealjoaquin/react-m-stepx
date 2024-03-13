@@ -1,7 +1,7 @@
 // import MStepxLazy from './components/MStepxLazy';
 // import { MStepx } from './components';
-import { Modal } from './components/MStepxContainer';
-import { Step1, Step2, Step3 } from './examples';
+import { Modal } from './components/MultiStepxModal';
+import { Step1, Step2, Step3 } from './examplesWithDialog';
 
 // const stepsLazy = [
 //   () => import('./examples/Step1'),
@@ -16,6 +16,11 @@ const STEPS = [
 ]
 
 function App() {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log('submit');
+  }
+
   return (
     <>
       <div className="App">
@@ -27,10 +32,11 @@ function App() {
             <div className='ml-auto'>
               <Modal.Close>Close</Modal.Close>
             </div>
-            <Modal.Stepx steps={STEPS} save={false} className="bg-white m-auto flex flex-col items-center justify-center">
+            <Modal.Stepx className="m-auto" onSubmit={handleSubmit} steps={STEPS} save={true} >
               <div className='flex justify-center gap-3'>
-                <Modal.Back className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back</Modal.Back>
+                <Modal.Back deleteInFirstStep className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back</Modal.Back>
                 <Modal.Next className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</Modal.Next>
+                <Modal.Submit className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Submit</Modal.Submit>
               </div>
             </Modal.Stepx>
           </Modal.Portal>

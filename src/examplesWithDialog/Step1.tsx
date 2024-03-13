@@ -1,15 +1,9 @@
-
 export default function Step1({ updateFields, fields }: any) {
-  // const nextStepx = () => {
-  //   nextStep();
-  // }
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFields({
       [e.target.name]: e.target.value
     })
   }
-
   return (
     <>
       <h2 className="text-2xl font-bold">Step 1</h2>
