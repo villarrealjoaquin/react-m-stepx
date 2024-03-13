@@ -5,6 +5,9 @@ import { localStorageManager } from "../logic/local-storage-manager";
 import { retrieveFromStorage } from "../logic/retrieveFromStorage";
 import { localStorageKeys } from "../models/local-storage-keys";
 import { createContext } from "../context";
+import { styles } from "../constants";
+import Overlay from "./Overlay";
+import { deleteScroll } from "../logic";
 
 type ContextModal = {
   open: boolean;
@@ -48,61 +51,38 @@ export function ModalStepx({ children }: { children: React.ReactNode }) {
   );
 }
 
-const deleteScroll = (isScrollDelete: boolean) => {
-  if (isScrollDelete) {
-    document.body.classList.add('body-no-scroll');
-  } else {
-    document.body.classList.remove('body-no-scroll');
-  }
-};
-
 export function Portal({ scrollLock, overlay, children }: { scrollLock: boolean, overlay: boolean, children: React.ReactNode }) {
   const { portalRoot } = useRoot();
   const { open } = useModalContext(CONSUMER_MODAL);
   deleteScroll(scrollLock);
 
-  const overlayStyles: React.CSSProperties = overlay
-    ? { position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', backgroundColor: 'rgba(0, 0, 0, 0.7)', zIndex: 50 }
+  const overlayStyles: Record<string, unknown> = overlay
+    ? styles
     : null
 
   return open && portalRoot
     ? ReactDOM.createPortal(
-      <div role="dialog" className="flex justify-center flex-col bg-white" style={{ ...overlayStyles }} aria-modal="true" hidden={!open} tabIndex={-1} >
-        {children}
-      </div>
+      <>
+        <Overlay style={overlayStyles} />
+        <div
+          role="dialog"
+          className="flex flex-col bg-white relative z-10 p-4 mx-auto my-8 rounded-lg shadow-md"
+          aria-modal="true"
+          hidden={!open}
+        >
+          {children}
+        </div>
+      </>
       , portalRoot)
     : null;
 }
 
-function Overlay(props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>) {
-  const { ...overlayProps } = props;
-
-  const overlayStyles: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    zIndex: 10,
-    ...overlayProps.style,
-  };
-
-  return (
-    <div
-      {...overlayProps}
-      style={overlayStyles}
-    />
-  );
-}
-
 const [StepxProvider, useStepxContext] = createContext<ContextPortal>('StepxProvider');
 
-function Stepx({
-  steps = [], save = false, children
-}: {
-  steps: React.ReactElement[], save?: boolean, children: React.ReactNode
-}) {
+type StepxForm = React.HTMLAttributes<HTMLFormElement> &
+{ steps: React.ReactNode[], children: React.ReactNode, save?: boolean };
+
+function Stepx({ steps = [], save = false, children, ...props }: StepxForm) {
   const [fields, setFields] = useState(retrieveFromStorage<Record<string, unknown>>({}, localStorageKeys.FIELDS));
   const { currentStep, onCurrentStep } = useModalContext(CONSUMER_MODAL);
 
@@ -145,10 +125,10 @@ function Stepx({
   if (!steps[currentStep]) return null;
   return (
     <StepxProvider onNextStep={nextStep} onBackStep={backStep} save={null}>
-      <>
+      <form onSubmit={(e) => e.preventDefault()} {...props}>
         {steps[currentStep]}
         {children}
-      </>
+      </form>
     </StepxProvider>
   );
 }
@@ -196,21 +176,18 @@ export function ClosePortal({ children, ...props }: ButtonProps) {
   if (!context.open) return null;
   return (
     <>
-      <div className="w-full flex justify-center">
-        <button
-          type="button"
-          className="text-red-500 m-auto"
-          onClick={context.onOpen}
-          {...props}>
-          {children}
-        </button>
-      </div>
+      <button
+        type="button"
+        className="text-red-500 m-auto"
+        onClick={context.onOpen}
+        {...props}>
+        {children}
+      </button>
     </>
   );
 }
 
 ModalStepx.Portal = Portal;
-ModalStepx.Overlay = Overlay;
 ModalStepx.Open = Trigger;
 ModalStepx.Close = ClosePortal;
 ModalStepx.Stepx = Stepx;

@@ -23,14 +23,15 @@ function App() {
           react-m-stepx
         </h1>
         <Modal>
-          <Modal.Portal scrollLock={true} overlay={false} >
-            {/* <Modal.Overlay className='' /> */}
-            <Modal.Stepx steps={STEPS} save={true}>
+          <Modal.Portal scrollLock={true} overlay={true}>
+            <div className='ml-auto'>
+              <Modal.Close>Close</Modal.Close>
+            </div>
+            <Modal.Stepx steps={STEPS} save={false} className="bg-white m-auto flex flex-col items-center justify-center">
               <div className='flex justify-center gap-3'>
                 <Modal.Back className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back</Modal.Back>
                 <Modal.Next className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</Modal.Next>
               </div>
-              <Modal.Close>Close</Modal.Close>
             </Modal.Stepx>
           </Modal.Portal>
           <Modal.Open>Open</Modal.Open>
