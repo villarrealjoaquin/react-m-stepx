@@ -16,7 +16,7 @@ export function useRoot() {
     };
   }, []);
 
-  portalRootRef.current?.setAttribute("role", "dialog");
+  // portalRootRef.current?.setAttribute("role", "dialog");
 
-  return { portalRoot: portalRootRef.current };
+  return { portalRoot: null };
 }

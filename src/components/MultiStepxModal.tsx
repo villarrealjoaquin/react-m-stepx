@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from "react";
-import ReactDOM from 'react-dom';
-import { RemoveScroll } from 'react-remove-scroll';
+import ReactDOM from "react-dom";
+import { RemoveScroll } from "react-remove-scroll";
 import { styles } from "../constants";
 import { createContext } from "../context";
-import { useRoot } from "../hooks";
 import { localStorageManager } from "../logic/local-storage-manager";
 import { retrieveFromStorage } from "../logic/retrieveFromStorage";
 import { localStorageKeys } from "../models/local-storage-keys";
@@ -21,24 +20,27 @@ type ContextPortal = {
   overlay?: boolean;
   onNextStep: () => void;
   onBackStep: () => void;
-}
+};
 
-const CONSUMER_MODAL = 'useModalContext';
-const CONSUMER_STEPX = 'useStepxContext';
+const CONSUMER_MODAL = "useModalContext";
+const CONSUMER_STEPX = "useStepxContext";
 
-const [ModalProvider, useModalContext] = createContext<ContextModal>('ModalProvider');
+const [ModalProvider, useModalContext] =
+  createContext<ContextModal>("ModalProvider");
 
 function ModalStepx({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState(retrieveFromStorage<number>(0, localStorageKeys.STEP));
+  const [currentStep, setCurrentStep] = useState(
+    retrieveFromStorage<number>(0, localStorageKeys.STEP)
+  );
 
-  const handleCurrentStepClick = (currentStep: number) => {
+  const handleCurrentStepClick = useCallback((currentStep: number) => {
     setCurrentStep(currentStep);
-  };
+  }, []);
 
-  const handlePortalToggle = () => {
+  const handlePortalToggle = useCallback(() => {
     setOpen(() => !open);
-  };
+  }, [open]);
   return (
     <ModalProvider
       open={open}
@@ -58,62 +60,82 @@ interface PortalProps {
 }
 
 function Portal({ overlay, children }: PortalProps) {
-  const { portalRoot } = useRoot();
   const { open } = useModalContext(CONSUMER_MODAL);
+  // const { portalRoot } = useRoot();
 
-  const overlayStyles: Record<string, unknown> = overlay
-    ? styles
-    : null
+  const overlayStyles = overlay ? styles : null;
 
-  return open && portalRoot
+  return open
     ? ReactDOM.createPortal(
-      <>
-        <Overlay style={overlayStyles} />
-        <RemoveScroll>
-          <div
-            role="dialog"
-            className="flex flex-col bg-white relative z-10 p-4 mx-auto my-8 rounded-lg shadow-md"
-            aria-modal="true"
-            hidden={!open}
-          >
-            {children}
-          </div>
-        </RemoveScroll>
-      </>
-      , portalRoot)
+        <>
+          <Overlay style={overlayStyles} />
+          <RemoveScroll>
+            <div
+              role="dialog"
+              className="flex flex-col bg-white relative z-50 p-4 mx-auto my-8 rounded-lg shadow-md"
+              aria-modal="true"
+              hidden={!open}
+            >
+              {children}
+            </div>
+          </RemoveScroll>
+        </>,
+        globalThis.document.body
+      )
     : null;
 }
 
-const [StepxProvider, useStepxContext] = createContext<ContextPortal>('StepxProvider');
+const [StepxProvider, useStepxContext] =
+  createContext<ContextPortal>("StepxProvider");
 
-type StepxForm = React.HTMLAttributes<HTMLFormElement> &
-{ steps: React.ReactNode[], children: React.ReactNode, save?: boolean };
+type StepxForm = React.HTMLAttributes<HTMLFormElement> & {
+  steps: React.ReactNode[];
+  children: React.ReactNode;
+  submit?: (data: any) => void;
+  save?: boolean;
+};
 
-function Stepx({ steps = [], save = false, children, ...props }: StepxForm) {
-  const [fields, setFields] = useState(retrieveFromStorage<Record<string, unknown>>({}, localStorageKeys.FIELDS));
+function Stepx({
+  steps = [],
+  save = false,
+  children,
+  submit,
+  ...props
+}: StepxForm) {
+  const [fields, setFields] = useState(
+    retrieveFromStorage<Record<string, unknown>>({}, localStorageKeys.FIELDS)
+  );
   const { currentStep, onCurrentStep } = useModalContext(CONSUMER_MODAL);
 
   const nextStep = useCallback(() => {
     if (currentStep + 1 < steps.length) {
-      if (save) localStorageManager.setInLocalStorage(localStorageKeys.STEP, currentStep + 1);
+      if (save)
+        localStorageManager.setInLocalStorage(
+          localStorageKeys.STEP,
+          currentStep + 1
+        );
       onCurrentStep((i) => i + 1);
     }
   }, [currentStep, onCurrentStep, steps.length, save]);
 
   const backStep = useCallback(() => {
     if (currentStep > 0) {
-      if (save) localStorageManager.setInLocalStorage(localStorageKeys.STEP, currentStep - 1);
+      if (save)
+        localStorageManager.setInLocalStorage(
+          localStorageKeys.STEP,
+          currentStep - 1
+        );
       onCurrentStep((i) => i - 1);
     }
   }, [currentStep, onCurrentStep, save]);
 
   if (!Array.isArray(steps) || React.Children.toArray(steps).length === 0) {
-    return <p>No steps provided or steps is not an array.</p>
+    return <p>No steps provided or steps is not an array.</p>;
   }
 
   const updateFields = (data: Record<string, unknown>) => {
     const update = {
-      ...(typeof fields === 'object' ? fields : {}),
+      ...(typeof fields === "object" ? fields : {}),
       ...data,
     };
     setFields(update);
@@ -123,16 +145,30 @@ function Stepx({ steps = [], save = false, children, ...props }: StepxForm) {
   steps = React.Children.map(steps, (child) => {
     if (React.isValidElement(child)) {
       return React.cloneElement(
-        child as React.ReactElement<any, string | React.JSXElementConstructor<any>>,
+        child as React.ReactElement<
+          any,
+          string | React.JSXElementConstructor<any>
+        >,
         { fields, updateFields, currentStep }
-      )
+      );
     }
   });
 
   if (!steps[currentStep]) return null;
+
   return (
-    <StepxProvider onNextStep={nextStep} onBackStep={backStep} length={steps.length}>
-      <form {...props}>
+    <StepxProvider
+      onNextStep={nextStep}
+      onBackStep={backStep}
+      length={steps.length}
+    >
+      <form
+        onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+          e.preventDefault();
+          submit(fields);
+        }}
+        {...props}
+      >
         {steps[currentStep]}
         {children}
       </form>
@@ -140,32 +176,69 @@ function Stepx({ steps = [], save = false, children, ...props }: StepxForm) {
   );
 }
 
-type ButtonProps<T extends HTMLElement = HTMLButtonElement> = React.ButtonHTMLAttributes<T> & {
-  children: React.ReactNode;
-  deleteInFirstStep?: boolean;
-  disabledInFirstStep?: boolean;
-};
+// const [StepxLazyProvider, useStepxLazyProvider] = createContext<any>('StepxLazyProvider');
+
+// type LazyProps = {
+//   steps: () => string[];
+//   children: React.ReactNode;
+// }
+
+// function StepxLazy({ steps, children }: LazyProps) {
+//   const { currentStep, onCurrentStep } = useModalContext(CONSUMER_MODAL);
+
+//   const LazyStep = React.lazy(steps[currentStep]);
+
+//   const nextStep = useCallback(() => {
+//     if (currentStep + 1 < steps.length) {
+//       onCurrentStep((i) => i + 1);
+//     }
+//   }, [currentStep, onCurrentStep, steps.length]);
+
+//   const backStep = useCallback(() => {
+//     if (currentStep > 0) {
+//       onCurrentStep((i) => i - 1);
+//     }
+//   }, [currentStep, onCurrentStep]);
+
+//   return (
+//     <>
+//       <StepxLazyProvider onNextStep={nextStep} onBackStep={backStep}>
+//         <React.Suspense fallback={<div>Loading...</div>}>
+//           <LazyStep />
+//           {children}
+//         </React.Suspense>
+//       </StepxLazyProvider>
+//     </>
+//   )
+// }
+
+type ButtonProps<T extends HTMLElement = HTMLButtonElement> =
+  React.ButtonHTMLAttributes<T> & {
+    children: React.ReactNode;
+    deleteInFirstStep?: boolean;
+    disabledInFirstStep?: boolean;
+  };
 
 function Next({ children, ...props }: ButtonProps) {
   const contextStepx = useStepxContext(CONSUMER_STEPX);
   const contextModal = useModalContext(CONSUMER_MODAL);
   if (contextModal.currentStep === contextStepx.length - 1) return null;
   return (
-    <button
-      type="button"
-      onClick={contextStepx.onNextStep}
-      {...props}
-    >
+    <button type="button" onClick={contextStepx.onNextStep} {...props}>
       {children}
     </button>
-  )
+  );
 }
 
-function Back({ children, deleteInFirstStep, disabledInFirstStep, ...props }: ButtonProps) {
+function Back({
+  children,
+  deleteInFirstStep,
+  disabledInFirstStep,
+  ...props
+}: ButtonProps) {
   const contextPortal = useStepxContext(CONSUMER_STEPX);
   const contextModal = useModalContext(CONSUMER_MODAL);
   if (deleteInFirstStep && contextModal.currentStep === 0) return null;
-
   return (
     <button
       type="button"
@@ -175,7 +248,7 @@ function Back({ children, deleteInFirstStep, disabledInFirstStep, ...props }: Bu
     >
       {children}
     </button>
-  )
+  );
 }
 
 function Submit({ children, ...props }: ButtonProps) {
@@ -185,25 +258,21 @@ function Submit({ children, ...props }: ButtonProps) {
   if (contextModal.currentStep === contextStepx.length - 1) {
     submit = true;
   }
-  return (
-    submit
-      ? <button {...props}>{children}</button>
-      : null
-  )
+  return submit ? (
+    <button type="submit" {...props}>
+      {children}
+    </button>
+  ) : null;
 }
 
 function Trigger({ children, ...props }: ButtonProps) {
   const contextModal = useModalContext(CONSUMER_MODAL);
   if (contextModal.open) return <></>;
   return (
-    <button
-      type="button"
-      onClick={contextModal.onOpen}
-      {...props}
-    >
+    <button type="button" onClick={contextModal.onOpen} {...props}>
       {children}
     </button>
-  )
+  );
 }
 
 function ClosePortal({ children, ...props }: ButtonProps) {
@@ -215,7 +284,8 @@ function ClosePortal({ children, ...props }: ButtonProps) {
         type="button"
         className="text-red-500 m-auto"
         onClick={context.onOpen}
-        {...props}>
+        {...props}
+      >
         {children}
       </button>
     </>
@@ -226,13 +296,13 @@ ModalStepx.Portal = Portal;
 ModalStepx.Open = Trigger;
 ModalStepx.Close = ClosePortal;
 ModalStepx.Stepx = Stepx;
+// ModalStepx.StepxLazy = StepxLazy;
 ModalStepx.Next = Next;
 ModalStepx.Back = Back;
 ModalStepx.Submit = Submit;
 
 // const rootModal = Object.assign(ModalStepx, {});
-const MODAL_NAME = 'MStepxContainer'
+const MODAL_NAME = "MStepxContainer";
 ModalStepx.displayName = MODAL_NAME;
 
 export { ModalStepx as Modal };
-
