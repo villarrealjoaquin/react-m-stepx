@@ -8,7 +8,7 @@ export default function useMStepx(steps: JSX.Element[], save: boolean) {
   const [currentStep, setCurrentStep] = useState<number>(retrieveFromStorage(0, localStorageKeys.STEP));
   const [fields, setFields] = useState<Record<string, unknown>>(retrieveFromStorage({}, localStorageKeys.FIELDS));
 
-  const updateData = (data: Record<string, unknown>) => {
+  const updateFields = (data: Record<string, unknown>) => {
     const updateFields = {
       ...fields,
       ...data,
@@ -34,16 +34,15 @@ export default function useMStepx(steps: JSX.Element[], save: boolean) {
   };
 
   steps = createStepsWithProps(steps, {
-    updateData,
-    nextStep,
-    backStep,
+    updateFields,
     fields,
-    currentStep,
   });
 
   return {
     step: steps[currentStep],
     fields,
     currentStep,
+    backStep,
+    nextStep,
   };
 }

@@ -1,7 +1,6 @@
-import useMStepx from "../hooks/useMStepx";
-
 interface MStepxProps {
-  steps: JSX.Element[];
+  step: JSX.Element;
+  submit: (data: any) => void;
   overlay?: boolean;
   className?: string;
   transition?: {
@@ -12,22 +11,28 @@ interface MStepxProps {
   open?: () => void;
 }
 
-export default function MStepx({ steps, overlay, className = '', transition, save = false }: MStepxProps) {
-  const { step, fields } = useMStepx(steps, save);
-
+export default function MStepx({
+  step,
+  overlay,
+  className = "",
+  transition,
+}: // save = false,
+MStepxProps) {
   const transitionStyles = transition
     ? {
-      transitionDuration: transition.duration || '0.3s',
-      transitionTimingFunction: transition.type || 'ease',
-    }
+        transitionDuration: transition.duration || "0.3s",
+        transitionTimingFunction: transition.type || "ease",
+      }
     : {};
 
   return (
     <>
-      <div className={`${overlay ? 'overlay' : ''} ${className}`} style={transitionStyles}>
+      <div
+        className={`${overlay ? "overlay" : ""} ${className}`}
+        style={transitionStyles}
+      >
         {step}
       </div>
-      <p>{JSON.stringify(fields)}</p>
     </>
-  )
+  );
 }
